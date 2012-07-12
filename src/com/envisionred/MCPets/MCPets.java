@@ -1,53 +1,130 @@
 package com.envisionred.MCPets;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.HashMap;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.envisionred.MCPets.Metrics.Graph;
+import com.envisionred.MCPets.events.ClickEvents;
+import com.envisionred.MCPets.events.DamageEvents;
+import com.envisionred.MCPets.events.DeathEvents;
+
 public class MCPets extends JavaPlugin{
-	public static Map<UUID, String> ownedPets;
+	private PetCommand cmdExecutor;
+	public static Map<String, UUID> selectedMobs;
 	public static Logger log;
 	public static MCPets plugin;
-public void onDisable(){
-	log.info("EnvisionRed's MCPets disabled.");
-	saveOwnedMobs(ClickEvents.ownedPets);
-}
-public void onEnable(){
-	plugin = this;
-	log = this.getLogger();
-	log.info("EnvisionRed's MCPets enabled");
-	this.getServer().getPluginManager().registerEvents(new ClickEvents(), this);
-	ownedPets = loadOwnedMobs();
-}
-public void saveOwnedMobs(Map<UUID, String> ownedMobs){
-	try{
-		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(this.getDataFolder() + "/ownedMobs"));
-		oos.writeObject(ownedMobs);
-		oos.flush();
-		oos.close();
-	}catch(Exception e){
-		log.severe("Failed to save owned pets.");
+	private FileConfiguration petsConfig = null;
+	private File petsFile = null;
+	@Override
+	public void onDisable(){
+		log.info("EnvisionRed's MCPets disabled.");
 	}
-}
-public Map<UUID, String>loadOwnedMobs(){
-	try{
-		ObjectInputStream oos = new ObjectInputStream(new FileInputStream(this.getDataFolder() + "/ownedMobs"));
-		Object result = oos.readObject();
-		Map<UUID, String>map = (Map<UUID, String>) result;
-		return map;
-	}catch(Exception e){
-		log.severe("Failed to load owned pets.");
+	@Override
+	public void onEnable(){
+		enableConfig();
+		registerEvents();
+		plugin = this;
+		log = this.getLogger();
+		log.info("EnvisionRed's MCPets enabled");
+		cmdExecutor = new PetCommand(this);
+		getCommand("pet").setExecutor(cmdExecutor);
+		if (!this.getConfig().getBoolean("opt-out-metrics", false)){
+			startMetrics();
+		}
 	}
-	return null;
-}
+	public void enableConfig(){
+		File cfgFile = new File(this.getDataFolder(), "config.yml");
+		if (!cfgFile.exists()){
+			this.getConfig().options().copyHeader(true);
+			this.saveDefaultConfig();
+		}
+		petsFile = new File(this.getDataFolder(), "Pets.yml");
+		if (!petsFile.exists()){
+			this.getPets().options().copyDefaults(true);
+			this.getPets().options().copyHeader(true);
+			this.savePetsFile();
+			
+		}
+	}
+	public void registerEvents(){
+		Bukkit.getServer().getPluginManager().registerEvents(new ClickEvents(), this);
+		Bukkit.getServer().getPluginManager().registerEvents(new DeathEvents(), this);
+		Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(this, new setPetsToFollow(), 100L, 10L);
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
+			public void run(){
+				Bukkit.getServer().getPluginManager().registerEvents(new DamageEvents(), MCPets.plugin);
+			}
+		}, 200L);
+	}
+	public void startMetrics(){
+		boolean noMetrics = this.getConfig().getBoolean("opt-out-metrics", false);
+		if (noMetrics){
+			return;
+		}
+		try {
+			Metrics metrics = new Metrics(this);
+			Graph petGraph = metrics.createGraph("Total number of pets");
+			petGraph.addPlotter(new Metrics.Plotter("No. of pets"){
+
+				@Override
+				public int getValue() {
+					int petCount = 0;
+					for (String idString : MCPets.plugin.getPets().getConfigurationSection("pets").getKeys(false)){
+						if (idString.equalsIgnoreCase("test")){
+							MCPets.plugin.getPets().set("pets.test", null);
+							MCPets.plugin.savePetsFile();
+							continue;
+						}else{
+							petCount++;
+						}
+					}
+					return petCount;
+				}
+				
+			}); 
+			
+			log.info("Metrics started");
+		} catch (IOException e) {
+			log.info("Metrics failed to start.");
+			return;
+		}
+	}
+	public FileConfiguration getPets(){
+		if (petsConfig == null){
+			this.reloadPetsFile();
+		}
+		return petsConfig;
+	}
+	public void reloadPetsFile(){
+		if (petsFile == null){
+			petsFile = new File(this.getDataFolder(),
+					"Pets.yml");
+		}
+		petsConfig = YamlConfiguration.loadConfiguration(petsFile);
+		InputStream petStream = this.getResource("Pets.yml");
+		if (petStream != null){
+			YamlConfiguration petDefault = YamlConfiguration.loadConfiguration(petStream);
+			petsConfig.setDefaults(petDefault);
+		}
+	}
+	public void savePetsFile(){
+		Logger log = this.getLogger();
+		if (petsFile == null || petsConfig == null){
+			return;
+		}
+		try {
+			petsConfig.save(petsFile);
+		}catch(IOException e){
+			log.severe("Failed to save the pets file.");
+		}
+	}
 }

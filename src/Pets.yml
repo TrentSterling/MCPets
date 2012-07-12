@@ -1,0 +1,5 @@
+#After this file is created, it will be empty on purpose. Do not put anything here, this is where the pets data will be saved.
+#Do not attempt to manually edit in new pets. It's not a good idea as you don't know the UUID of each pet. 
+pets:
+  test: 2
+    

@@ -1,15 +1,38 @@
 name: MCPets
-version: 0.1
+version: 0.2
 main: com.envisionred.MCPets.MCPets
 description: Allows you to have baby animals as pets!
 author: EnvisionRed
 commands:
-  tame:
-    description: Tames your currently selected baby animal.
+  pet:
+    description: Includes a variety of commands dealing with pets..
     default: op
     usage: /<command>
-    permission: MCPets.tame
+  pet tame:
+    description: Tames your selected pet!
+    default: op
+    usage: /<command>
+  pet sit:
+    description: Toggles sit mode for your selected pet!
+    default: op
+    usage: /<command>
+  pet release:
+    description: Releases your selected pet :(
+    usage: /<command>
+  pet setname:
+    description: Sets the name for your selected pet.
+    usage: /<command> <name>
 permissions:
   MCPets.tame:
     description: Allows users to tame baby animals as pets
     default: op
+  MCPets.sit:
+    description: Allows users to use the /pet sit command.
+    default: op
+  MCPets.release:
+    description: Allows users to release their pets.
+    default: op
+  MCPets.name:
+    description: Allows users to name their pets.
+    default: op
+load: POSTWORLD
