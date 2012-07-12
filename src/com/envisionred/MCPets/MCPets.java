@@ -78,20 +78,14 @@ public class MCPets extends JavaPlugin{
 				@Override
 				public int getValue() {
 					int petCount = 0;
-					for (String idString : MCPets.plugin.getPets().getConfigurationSection("pets").getKeys(false)){
-						if (idString.equalsIgnoreCase("test")){
-							MCPets.plugin.getPets().set("pets.test", null);
-							MCPets.plugin.savePetsFile();
-							continue;
-						}else{
-							petCount++;
-						}
+					for (@SuppressWarnings("unused") String idString : MCPets.plugin.getPets().getConfigurationSection("pets").getKeys(false)){
+						petCount++;					
 					}
 					return petCount;
 				}
 				
-			}); 
-			
+			});
+			metrics.start();
 			log.info("Metrics started");
 		} catch (IOException e) {
 			log.info("Metrics failed to start.");

@@ -36,14 +36,22 @@ public class ClickEvents implements Listener{
 						player.sendMessage(ChatColor.BLUE + "You have selected an untamed animal. Do /pet tame to tame it.");
 						return;
 					}else{						
-						String owner  = MCPets.plugin.getPets().getString("pets." + idString + ".owner");
-						String petName = MCPets.plugin.getPets().getString("pets." + idString + ".name");
+						String owner  = pets.getString("pets." + idString + ".owner");
+						String petName = pets.getString("pets." + idString + ".name");
 						if (!owner.equalsIgnoreCase(player.getName())){
 						player.sendMessage(ChatColor.RED + "This pet (named " + ChatColor.GREEN + petName + ChatColor.RED + ") is owned by "
 						+ ChatColor.GREEN + owner+ ChatColor.RED + " and cannot be selected by others");
+						event.setCancelled(true);
 						return;
 						}else{							
 							if (player.isSneaking()){
+								boolean sitting = pets.getBoolean("pets." + idString + ".sitting");
+								if (sitting){
+									player.sendMessage(ChatColor.RED + "You cannot ride this pet because it is sitting.");
+									event.setCancelled(true);
+									return;
+								}
+								player.sendMessage(ChatColor.GREEN + "You are now riding your pet named " + ChatColor.AQUA + petName);
 								mob.setPassenger(player);
 								return;
 							}

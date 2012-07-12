@@ -90,7 +90,7 @@ public class PetCommand implements CommandExecutor{
 					return true;
 				}
 				String petName = pets.getString("pets." + id.toString() + ".name");
-				player.sendMessage(ChatColor.GREEN + "That pet (named " + petName + ") is owned by " + ownerName + " and cannot be tamed by you.");
+				player.sendMessage(ChatColor.GREEN + "That pet (named " + ChatColor.AQUA + petName + ChatColor.GREEN + ") is owned by " + ChatColor.AQUA + ownerName + ChatColor.GREEN +" and cannot be tamed by you.");
 				return true;
 			}
 			int maxPets = MCPets.plugin.getConfig().getInt("max-pets");
@@ -100,10 +100,12 @@ public class PetCommand implements CommandExecutor{
 				player.sendMessage(ChatColor.GREEN + "To tame another you will have to release one of your current ones.");
 				return true;
 			}
-			pets.createSection("pets." +id.toString());
-			pets.set("pets." + id.toString() + ".owner", playerName);
-			pets.set("pets." +id.toString() + ".name", name);
-			pets.set("pets." +id.toString() + ".sitting", false);
+			String idString = id.toString();
+			pets.createSection("pets." +idString);
+			pets.set("pets." + idString + ".owner", playerName);
+			pets.set("pets." +idString + ".name", name);
+			pets.set("pets." +idString + ".sitting", false);
+			pets.set("pets." + idString + ".type", name);
 			pet.setAgeLock(true);
 			player.sendMessage(ChatColor.AQUA + "Congratulations! You have tamed your pet. Do /pet help to view commands.");
 			MCPets.plugin.savePetsFile();

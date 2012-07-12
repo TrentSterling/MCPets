@@ -1,8 +1,9 @@
 name: MCPets
-version: 0.2
+version: 0.3
 main: com.envisionred.MCPets.MCPets
 description: Allows you to have baby animals as pets!
 author: EnvisionRed
+softdepend: [Vault]
 commands:
   pet:
     description: Includes a variety of commands dealing with pets..

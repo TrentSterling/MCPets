@@ -6,6 +6,7 @@ import java.util.UUID;
 import net.minecraft.server.EntityCreature;
 import net.minecraft.server.Navigation;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -23,25 +24,21 @@ Utils utils = new Utils();
 			return;
 		}
 		for (String idString : pets.getConfigurationSection("pets").getKeys(false)){
-			if (idString.equalsIgnoreCase("test")){
-				pets.set("pets.test", null);
-				MCPets.plugin.savePetsFile();
-				continue;
-			}
 			UUID id = UUID.fromString(idString);
 			Animals pet = (Animals) utils.getEntityByUUID(id);
 			String ownerName = pets.getString("pets." + idString +".owner");
 			Player player = MCPets.plugin.getServer().getPlayerExact(ownerName);
 			if (player == null){
-				return;
+				continue;
 			}
 			if (pet == null){
-				return;
+				Bukkit.getServer().broadcastMessage("pet is null");
+				continue;
 			}
 			Location playerLoc = player.getLocation();
 			Location petLoc = pet.getLocation();
 			boolean sitting = pets.getBoolean("pets." + id.toString() + ".sitting");
-			if (sitting){
+			if (sitting == true){
 				Double x = pets.getDouble("pets." + idString + ".sitX");
 				Double y = pets.getDouble("pets." + idString + ".sitY");
 				Double z = pets.getDouble("pets." + idString + ".sitZ");
@@ -50,10 +47,14 @@ Utils utils = new Utils();
 				Location sitLocation = new Location(pet.getWorld(), x, y, z, yaw, pitch);
 				if (!petLoc.equals(sitLocation)){
 					pet.teleport(sitLocation);
-					return;
+					continue;
 				}
-				return;
+				continue;
 			}
+			if (pet.getPassenger() != null){
+				continue;
+			
+			}		
 			if (playerLoc.distance(petLoc) >= 20){
 				Location tpLoc = playerLoc;
 				while (tpLoc.getBlock().getType() == Material.AIR){
@@ -61,7 +62,7 @@ Utils utils = new Utils();
 				}
 				tpLoc.setY(tpLoc.getY() + 1);
 				pet.teleport(tpLoc);
-				return;
+				continue;
 			}
 			EntityCreature ec = ((CraftCreature)pet).getHandle();
 			Navigation nav = ec.al();
